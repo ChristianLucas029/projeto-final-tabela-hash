@@ -22,7 +22,7 @@ Produto* tabela_hash;
 ItemCarrinho* carrinho;
 int tamanho_tabela = TAMANHO_TABELA_INICIAL;
 int tamanho_carrinho = 0;
-int num_produtos = 0;  // Contador de produtos na tabela
+int num_produtos = 0;
 
 // Função hash
 int hash(int chave) {
@@ -128,7 +128,6 @@ void remover_do_carrinho(int id, int quantidade) {
                 if (produto) {
                     produto->estoque += carrinho[i].quantidade;
                 }
-                // Remove o item do carrinho
                 for (int j = i; j < tamanho_carrinho - 1; j++) {
                     carrinho[j] = carrinho[j + 1];
                 }
@@ -183,10 +182,9 @@ int main() {
     // Verifica se a alocação foi bem-sucedida
     if (tabela_hash == NULL || carrinho == NULL) {
         printf("Erro ao alocar memória.\n");
-        return 1; // Ou algum código de erro
+        return 1;
     }
 
-    // Inicializa a tabela hash e o carrinho
     for (int i = 0; i < tamanho_tabela; i++) {
         tabela_hash[i].ocupado = 0;
     }
@@ -221,7 +219,7 @@ int main() {
                 scanf("%d", &quantidade);
                 adicionar_ao_carrinho(id, quantidade);
                 printf("Deseja adicionar outro produto? (S/N): ");
-                getchar(); // Para consumir o \n da entrada anterior
+                getchar();
                 scanf("%c", &continuar);
             } while (continuar == 'S' || continuar == 's');
         } else if (opcao == 3) {

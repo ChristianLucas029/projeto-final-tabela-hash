@@ -189,11 +189,11 @@ int main() {
     }
     
     // Inserção de produtos iniciais
-    inserir_produto(1, "Camiseta Básica", 39.90, 100);
-    inserir_produto(2, "Jeans Feminino", 89.90, 100);
-    inserir_produto(3, "Tênis Casual", 179.90, 100);
-    inserir_produto(4, "Blusa de Frio", 129.90, 100);
-    inserir_produto(5, "Short Jeans", 59.90, 100);
+    inserir_produto(1, "Camiseta Básica", 39.90, 1000);
+    inserir_produto(2, "Jeans Feminino", 89.90, 1000);
+    inserir_produto(3, "Tênis Casual", 179.90, 1000);
+    inserir_produto(4, "Blusa de Frio", 129.90, 1000);
+    inserir_produto(5, "Short Jeans", 59.90, 1000);
     
     int opcao, id, quantidade;
     char continuar;

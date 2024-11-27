@@ -230,7 +230,7 @@ int main() {
         } else if (opcao == 4) {
             exibir_carrinho();
         } else if (opcao == 5) {
-            printf("Saindo...")
+            printf("Saindo...");
             break;
         } else {
             printf("Opção inválida!\n");

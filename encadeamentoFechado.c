@@ -1,27 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
-#define TAMANHO_TABELA_INICIAL 10
+#define TAMANHO_TABELA_INICIAL 20
 #define FATOR_CARGA 0.7
 
-typedef struct {
+typedef struct Produto {
     int id;
     char nome[50];
     float preco;
     int estoque;
-    int ocupado;
+    struct Produto* proximo;  // Ponteiro para o próximo produto na lista encadeada
 } Produto;
 
-typedef struct {
-    int id;
-    int quantidade;
-} ItemCarrinho;
-
-Produto* tabela_hash;
-ItemCarrinho* carrinho;
+Produto** tabela_hash;
 int tamanho_tabela = TAMANHO_TABELA_INICIAL;
-int tamanho_carrinho = 0;
 int num_produtos = 0;
 
 // Função hash
@@ -31,8 +25,10 @@ int hash(int chave) {
 
 // Redimensiona a tabela hash
 void redimensionar_tabela() {
+    clock_t inicio = clock();  // Marca o tempo de início da operação
+
     int novo_tamanho = tamanho_tabela * 2;
-    Produto* nova_tabela = (Produto*)malloc(sizeof(Produto) * novo_tamanho);
+    Produto** nova_tabela = (Produto*)malloc(sizeof(Produto) * novo_tamanho);
     
     if (nova_tabela == NULL) {
         printf("Erro ao alocar memória para redimensionamento.\n");
@@ -41,20 +37,19 @@ void redimensionar_tabela() {
 
     // Inicializa a nova tabela
     for (int i = 0; i < novo_tamanho; i++) {
-        nova_tabela[i].ocupado = 0;
+        nova_tabela[i] = NULL;
     }
 
     // Reinsere os produtos na nova tabela
     for (int i = 0; i < tamanho_tabela; i++) {
-        if (tabela_hash[i].ocupado) {
-            int indice = hash(tabela_hash[i].id) % novo_tamanho;
-            for (int j = 0; j < novo_tamanho; j++) {
-                int tentativa = (indice + j) % novo_tamanho;
-                if (!nova_tabela[tentativa].ocupado) {
-                    nova_tabela[tentativa] = tabela_hash[i];
-                    break;
-                }
-            }
+        Produto* produto = tabela_hash[i];
+        while (produto != NULL) {
+            int indice = hash(produto->id) % novo_tamanho;
+            Produto* novo_produto = (Produto*)malloc(sizeof(Produto));
+            *novo_produto = *produto;
+            novo_produto->proximo = nova_tabela[indice];
+            nova_tabela[indice] = novo_produto;
+            produto = produto->proximo;
         }
     }
 
@@ -62,103 +57,84 @@ void redimensionar_tabela() {
     free(tabela_hash);
     tabela_hash = nova_tabela;
     tamanho_tabela = novo_tamanho;
-    printf("Tabela redimensionada para %d.\n", tamanho_tabela);
+    printf("\nTabela redimensionada para %d.\n", tamanho_tabela);
+
+    clock_t fim = clock();  // Marca o tempo de término da operação
+    printf("\nTempo de redimensionamento: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
 }
 
 // Insere produto na tabela hash
 void inserir_produto(int id, const char *nome, float preco, int estoque) {
+    clock_t inicio = clock();  // Marca o tempo de início da operação
+
     // Verifica se a tabela precisa ser redimensionada
     if ((float)num_produtos / tamanho_tabela >= FATOR_CARGA) {
         redimensionar_tabela();
     }
 
     int indice = hash(id);
-    for (int i = 0; i < tamanho_tabela; i++) {
-        int tentativa = (indice + i) % tamanho_tabela;
-        if (!tabela_hash[tentativa].ocupado) {
-            tabela_hash[tentativa].id = id;
-            strcpy(tabela_hash[tentativa].nome, nome);
-            tabela_hash[tentativa].preco = preco;
-            tabela_hash[tentativa].estoque = estoque;
-            tabela_hash[tentativa].ocupado = 1;
-            num_produtos++;
-            return;
-        }
-    }
-    printf("Erro: tabela hash cheia.\n");
+    Produto* novo_produto = (Produto*)malloc(sizeof(Produto));
+    novo_produto->id = id;
+    strcpy(novo_produto->nome, nome);
+    novo_produto->preco = preco;
+    novo_produto->estoque = estoque;
+    novo_produto->proximo = tabela_hash[indice];  // Encadeia no início da lista
+    tabela_hash[indice] = novo_produto;
+    num_produtos++;
+
+    clock_t fim = clock();  // Marca o tempo de término da operação
+    printf("\nTempo de inserção: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
 }
 
 // Busca produto
 Produto* buscar_produto(int id) {
+    clock_t inicio = clock();  // Marca o tempo de início da operação
+
     int indice = hash(id);
-    for (int i = 0; i < tamanho_tabela; i++) {
-        int tentativa = (indice + i) % tamanho_tabela;
-        if (tabela_hash[tentativa].ocupado && tabela_hash[tentativa].id == id) {
-            return &tabela_hash[tentativa];
+    Produto* produto = tabela_hash[indice];
+    while (produto != NULL) {
+        if (produto->id == id) {
+            clock_t fim = clock();  // Marca o tempo de término da operação
+            printf("\nTempo de busca: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
+            return produto;
         }
-        if (!tabela_hash[tentativa].ocupado) break;
+        produto = produto->proximo;
     }
+
+    clock_t fim = clock();  // Marca o tempo de término da operação
+    printf("\nTempo de busca: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
     return NULL;
 }
 
-// Adiciona produto ao carrinho
-void adicionar_ao_carrinho(int id, int quantidade) {
-    Produto *produto = buscar_produto(id);
-    if (produto) {
-        if (produto->estoque >= quantidade) {
-            carrinho[tamanho_carrinho].id = id;
-            carrinho[tamanho_carrinho].quantidade = quantidade;
-            tamanho_carrinho++;
-            produto->estoque -= quantidade;
-            printf("Produto '%s' adicionado ao carrinho.\n", produto->nome);
-        } else {
-            printf("Estoque insuficiente para '%s'.\n", produto->nome);
-        }
-    } else {
-        printf("Produto não encontrado.\n");
-    }
-}
+// Remove produto
+void remover_produto(int id) {
+    clock_t inicio = clock();  // Marca o tempo de início da operação
 
-// Remove itens do carrinho
-void remover_do_carrinho(int id, int quantidade) {
-    for (int i = 0; i < tamanho_carrinho; i++) {
-        if (carrinho[i].id == id) {
-            if (quantidade >= carrinho[i].quantidade) {
-                Produto *produto = buscar_produto(id);
-                if (produto) {
-                    produto->estoque += carrinho[i].quantidade;
-                }
-                for (int j = i; j < tamanho_carrinho - 1; j++) {
-                    carrinho[j] = carrinho[j + 1];
-                }
-                tamanho_carrinho--;
-                printf("Item removido completamente do carrinho.\n");
+    int indice = hash(id);
+    Produto* produto = tabela_hash[indice];
+    Produto* anterior = NULL;
+
+    while (produto != NULL) {
+        if (produto->id == id) {
+            if (anterior == NULL) {
+                tabela_hash[indice] = produto->proximo;  // Remove da lista
             } else {
-                Produto *produto = buscar_produto(id);
-                if (produto) {
-                    produto->estoque += quantidade;
-                }
-                carrinho[i].quantidade -= quantidade;
-                printf("Quantidade ajustada. Restam %d unidades no carrinho.\n", carrinho[i].quantidade);
+                anterior->proximo = produto->proximo;  // Remove da lista
             }
+            free(produto);
+            num_produtos--;
+            printf("\nProduto '%d' removido com sucesso.\n", id);
+            clock_t fim = clock();  // Marca o tempo de término da operação
+            printf("\nTempo de remoção: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
             return;
         }
+        anterior = produto;
+        produto = produto->proximo;
     }
-    printf("Produto não encontrado no carrinho.\n");
-}
+    printf("\nProduto não encontrado.\n");
 
-// Exibe os itens do carrinho
-void exibir_carrinho() {
-    printf("\nCarrinho de Compras:\n");
-    float total = 0;
-    for (int i = 0; i < tamanho_carrinho; i++) {
-        Produto *produto = buscar_produto(carrinho[i].id);
-        if (produto) {
-            printf("%s x%d - R$%.2f\n", produto->nome, carrinho[i].quantidade, produto->preco * carrinho[i].quantidade);
-            total += produto->preco * carrinho[i].quantidade;
-        }
-    }
-    printf("Total: R$%.2f\n\n", total);
+    clock_t fim = clock();  // Marca o tempo de término da operação
+    printf("\nTempo de remoção: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
 }
 
 // Exibe o catálogo de produtos
@@ -167,44 +143,54 @@ void exibir_catalogo() {
     printf("ID | Nome do Produto             | Preço   | Estoque\n");
     printf("--------------------------------------------------------\n");
     for (int i = 0; i < tamanho_tabela; i++) {
-        if (tabela_hash[i].ocupado) {
-            printf("%2d | %-25s | R$%-6.2f | %d\n", tabela_hash[i].id, tabela_hash[i].nome, tabela_hash[i].preco, tabela_hash[i].estoque);
+        Produto* produto = tabela_hash[i];
+        while (produto != NULL) {
+            printf("%2d | %-25s | R$%-6.2f | %d\n", produto->id, produto->nome, produto->preco, produto->estoque);
+            produto = produto->proximo;
         }
     }
     printf("\n");
 }
 
 int main() {
-    // Aloca memória para a tabela hash e carrinho dinamicamente
+    // Aloca memória para a tabela hash dinamicamente
     tabela_hash = (Produto*)malloc(sizeof(Produto) * tamanho_tabela);
-    carrinho = (ItemCarrinho*)malloc(sizeof(ItemCarrinho) * tamanho_tabela);
     
     // Verifica se a alocação foi bem-sucedida
-    if (tabela_hash == NULL || carrinho == NULL) {
+    if (tabela_hash == NULL) {
         printf("Erro ao alocar memória.\n");
         return 1;
     }
-
     for (int i = 0; i < tamanho_tabela; i++) {
-        tabela_hash[i].ocupado = 0;
+        tabela_hash[i] = NULL;
     }
-
-    // Inserção de produtos iniciais
-    inserir_produto(1, "Camiseta Básica", 39.90, 1000);
-    inserir_produto(2, "Jeans Feminino", 89.90, 1000);
-    inserir_produto(3, "Tênis Casual", 179.90, 1000);
-    inserir_produto(4, "Blusa de Frio", 129.90, 1000);
-    inserir_produto(5, "Short Jeans", 59.90, 1000);
     
-    int opcao, id, quantidade;
+    // Inserção de produtos iniciais
+    inserir_produto(1, "Regata Básica", 49.90, 1000);
+    inserir_produto(2, "Camiseta Básica", 59.90, 1000);
+    inserir_produto(3, "Camiseta Estampada", 69.90, 1000);
+    inserir_produto(4, "Camisa Polo", 89.90, 1000);
+    inserir_produto(5, "Camisa Social", 119.90, 1000);
+    inserir_produto(6, "Bermuda Jeans", 159.90, 1000);
+    inserir_produto(7, "Bermuda Sarja", 139.90, 1000);
+    inserir_produto(8, "Calça Jeans", 199.90, 1000);
+    inserir_produto(9, "Calça Sarja", 179.90, 1000);
+    inserir_produto(10, "Calça Chino", 189.90, 1000);
+    inserir_produto(11, "Cinto de Couro", 79.90, 1000);
+    inserir_produto(12, "Gravata", 59.90, 1000);
+    inserir_produto(13, "Tênis Esportivo", 299.90, 1000);
+    inserir_produto(14, "Tênis Casual", 249.90, 1000);
+    inserir_produto(15, "Sapato Social", 219.90, 1000);
+
+    int opcao, id;
     char continuar;
 
     while (1) {
-        printf("\n--- Carrinho de Compras ---\n");
+        printf("\n--- Gerenciamento de Catálogo ---\n");
         printf("1. Exibir catálogo de produtos\n");
-        printf("2. Adicionar item ao carrinho\n");
-        printf("3. Remover item do carrinho\n");
-        printf("4. Exibir carrinho\n");
+        printf("2. Adicionar produto ao catálogo\n");
+        printf("3. Remover produto do catálogo\n");
+        printf("4. Buscar produto no catálogo\n");
         printf("5. Sair\n");
         printf("Escolha uma opção: ");
         scanf("%d", &opcao);
@@ -212,34 +198,54 @@ int main() {
         if (opcao == 1) {
             exibir_catalogo();
         } else if (opcao == 2) {
-            do {
-                printf("\nDigite o ID do produto que deseja adicionar ao carrinho: ");
-                scanf("%d", &id);
-                printf("Digite a quantidade: ");
-                scanf("%d", &quantidade);
-                adicionar_ao_carrinho(id, quantidade);
-                printf("Deseja adicionar outro produto? (S/N): ");
-                getchar();
-                scanf("%c", &continuar);
-            } while (continuar == 'S' || continuar == 's');
-        } else if (opcao == 3) {
-            printf("\nDigite o ID do produto que deseja remover do carrinho: ");
+            printf("\nDigite o ID do produto: ");
             scanf("%d", &id);
-            printf("Digite a quantidade: ");
-            scanf("%d", &quantidade);
-            remover_do_carrinho(id, quantidade);
+            getchar();  // Limpar o buffer
+            char nome[50];
+            printf("Digite o nome do produto: ");
+            fgets(nome, sizeof(nome), stdin);
+            nome[strcspn(nome, "\n")] = '\0'; // Remove o caractere de nova linha
+            float preco;
+            printf("Digite o preço do produto: ");
+            scanf("%f", &preco);
+            int estoque;
+            printf("Digite o estoque do produto: ");
+            scanf("%d", &estoque);
+            inserir_produto(id, nome, preco, estoque);
+        } else if (opcao == 3) {
+            printf("\nDigite o ID do produto a ser removido: ");
+            scanf("%d", &id);
+            remover_produto(id);
         } else if (opcao == 4) {
-            exibir_carrinho();
+            printf("\nDigite o ID do produto a ser buscado: ");
+            scanf("%d", &id);
+            Produto* produto = buscar_produto(id);
+            if (produto != NULL) {
+                printf("\nProduto encontrado:\n");
+                printf("ID: %d\n", produto->id);
+                printf("Nome: %s\n", produto->nome);
+                printf("Preço: R$%.2f\n", produto->preco);
+                printf("Estoque: %d\n", produto->estoque);
+            } else {
+                printf("\nProduto não encontrado.\n");
+            }
         } else if (opcao == 5) {
             printf("Saindo...");
             break;
         } else {
-            printf("Opção inválida!\n");
+            printf("Opção inválida.\n");
         }
     }
 
+    // Libera a memória alocada
+    for (int i = 0; i < tamanho_tabela; i++) {
+        Produto* produto = tabela_hash[i];
+        while (produto != NULL) {
+            Produto* temp = produto;
+            produto = produto->proximo;
+            free(temp);
+        }
+    }
     free(tabela_hash);
-    free(carrinho);
-
     return 0;
 }

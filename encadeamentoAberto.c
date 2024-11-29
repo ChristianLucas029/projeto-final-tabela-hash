@@ -25,7 +25,7 @@ int hash(int chave) {
 
 // Redimensiona a tabela hash
 void redimensionar_tabela() {
-    clock_t inicio = clock();  // Inicia a medição de tempo
+    clock_t inicio = clock(); 
     int novo_tamanho = tamanho_tabela * 2;
     Produto* nova_tabela = (Produto*)malloc(sizeof(Produto) * novo_tamanho);
     
@@ -57,7 +57,7 @@ void redimensionar_tabela() {
     free(tabela_hash);
     tabela_hash = nova_tabela;
     tamanho_tabela = novo_tamanho;
-    clock_t fim = clock();  // Finaliza a medição de tempo
+    clock_t fim = clock();
 
     printf("\nTabela redimensionada para %d.\n", tamanho_tabela);
     printf("\nTempo de redimensionamento: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
@@ -65,7 +65,7 @@ void redimensionar_tabela() {
 
 // Insere produto na tabela hash
 void inserir_produto(int id, const char *nome, float preco, int estoque) {
-    clock_t inicio = clock();  // Inicia a medição de tempo
+    clock_t inicio = clock(); 
 
     // Verifica se a tabela precisa ser redimensionada
     if ((float)num_produtos / tamanho_tabela >= FATOR_CARGA) {
@@ -82,7 +82,7 @@ void inserir_produto(int id, const char *nome, float preco, int estoque) {
             tabela_hash[tentativa].estoque = estoque;
             tabela_hash[tentativa].ocupado = 1;
             num_produtos++;
-            clock_t fim = clock();  // Finaliza a medição de tempo
+            clock_t fim = clock();
             printf("\nProduto inserido com sucesso.\n");
             printf("\nTempo de inserção: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
             return;
@@ -93,39 +93,39 @@ void inserir_produto(int id, const char *nome, float preco, int estoque) {
 
 // Busca produto
 Produto* buscar_produto(int id) {
-    clock_t inicio = clock();  // Inicia a medição de tempo
+    clock_t inicio = clock();
     int indice = hash(id);
     for (int i = 0; i < tamanho_tabela; i++) {
         int tentativa = (indice + i) % tamanho_tabela;
         if (tabela_hash[tentativa].ocupado && tabela_hash[tentativa].id == id) {
-            clock_t fim = clock();  // Finaliza a medição de tempo
+            clock_t fim = clock();
             printf("\nTempo de busca: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
             return &tabela_hash[tentativa];
         }
         if (!tabela_hash[tentativa].ocupado) break;
     }
-    clock_t fim = clock();  // Finaliza a medição de tempo
+    clock_t fim = clock();
     printf("\nTempo de busca: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
     return NULL;
 }
 
 // Remove produto
 void remover_produto(int id) {
-    clock_t inicio = clock();  // Inicia a medição de tempo
+    clock_t inicio = clock(); 
     int indice = hash(id);
     for (int i = 0; i < tamanho_tabela; i++) {
         int tentativa = (indice + i) % tamanho_tabela;
         if (tabela_hash[tentativa].ocupado && tabela_hash[tentativa].id == id) {
             tabela_hash[tentativa].ocupado = 0;
             num_produtos--;
-            clock_t fim = clock();  // Finaliza a medição de tempo
+            clock_t fim = clock(); 
             printf("\nProduto '%d' removido com sucesso.\n", id);
             printf("\nTempo de remoção: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
             return;
         }
         if (!tabela_hash[tentativa].ocupado) break;
     }
-    clock_t fim = clock();  // Finaliza a medição de tempo
+    clock_t fim = clock(); 
     printf("\nProduto não encontrado.\n");
     printf("\nTempo de remoção: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
 }

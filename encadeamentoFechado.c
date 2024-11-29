@@ -25,7 +25,7 @@ int hash(int chave) {
 
 // Redimensiona a tabela hash
 void redimensionar_tabela() {
-    clock_t inicio = clock();  // Marca o tempo de início da operação
+    clock_t inicio = clock(); 
 
     int novo_tamanho = tamanho_tabela * 2;
     Produto** nova_tabela = (Produto*)malloc(sizeof(Produto) * novo_tamanho);
@@ -59,13 +59,13 @@ void redimensionar_tabela() {
     tamanho_tabela = novo_tamanho;
     printf("\nTabela redimensionada para %d.\n", tamanho_tabela);
 
-    clock_t fim = clock();  // Marca o tempo de término da operação
+    clock_t fim = clock(); 
     printf("\nTempo de redimensionamento: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
 }
 
 // Insere produto na tabela hash
 void inserir_produto(int id, const char *nome, float preco, int estoque) {
-    clock_t inicio = clock();  // Marca o tempo de início da operação
+    clock_t inicio = clock(); 
 
     // Verifica se a tabela precisa ser redimensionada
     if ((float)num_produtos / tamanho_tabela >= FATOR_CARGA) {
@@ -82,33 +82,33 @@ void inserir_produto(int id, const char *nome, float preco, int estoque) {
     tabela_hash[indice] = novo_produto;
     num_produtos++;
 
-    clock_t fim = clock();  // Marca o tempo de término da operação
+    clock_t fim = clock(); 
     printf("\nTempo de inserção: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
 }
 
 // Busca produto
 Produto* buscar_produto(int id) {
-    clock_t inicio = clock();  // Marca o tempo de início da operação
+    clock_t inicio = clock();  
 
     int indice = hash(id);
     Produto* produto = tabela_hash[indice];
     while (produto != NULL) {
         if (produto->id == id) {
-            clock_t fim = clock();  // Marca o tempo de término da operação
+            clock_t fim = clock();  /
             printf("\nTempo de busca: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
             return produto;
         }
         produto = produto->proximo;
     }
 
-    clock_t fim = clock();  // Marca o tempo de término da operação
+    clock_t fim = clock();
     printf("\nTempo de busca: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
     return NULL;
 }
 
 // Remove produto
 void remover_produto(int id) {
-    clock_t inicio = clock();  // Marca o tempo de início da operação
+    clock_t inicio = clock(); 
 
     int indice = hash(id);
     Produto* produto = tabela_hash[indice];
@@ -124,7 +124,7 @@ void remover_produto(int id) {
             free(produto);
             num_produtos--;
             printf("\nProduto '%d' removido com sucesso.\n", id);
-            clock_t fim = clock();  // Marca o tempo de término da operação
+            clock_t fim = clock(); 
             printf("\nTempo de remoção: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
             return;
         }
@@ -133,7 +133,7 @@ void remover_produto(int id) {
     }
     printf("\nProduto não encontrado.\n");
 
-    clock_t fim = clock();  // Marca o tempo de término da operação
+    clock_t fim = clock();
     printf("\nTempo de remoção: %.8f segundos.\n", (double)(fim - inicio) / CLOCKS_PER_SEC);
 }
 
